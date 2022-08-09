@@ -1,0 +1,6 @@
+4noise	euclidean	172
+4noise	manhattan	265
+4noise	chebyshev	292
+4noise	euclidean	172	0:03:02.466039
+4noise	manhattan	265	0:03:01.098561
+4noise	chebyshev	292	0:03:01.270706

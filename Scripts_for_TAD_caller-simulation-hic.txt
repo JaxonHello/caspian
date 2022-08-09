@@ -1,0 +1,140 @@
+### COMMAND LINE EXAMPLES FOR ALL TOOLS FOR Rao_2014 GM12878 SAMPLES
+#####Directory of Hi-C data #####
+##Simulated Hi-C data
+
+../TAD_results/SimulationData/4noise.hic
+#####0. CASPAIN-TAD ##### 
+#modify the parametr:metricList,dir,res,hicname
+python Hdbscan-simulatedTAD.py
+
+
+##### 1.TopDom #####
+
+#####simualted data，40kb#####
+
+library("TopDom")
+chr<-"chr19"
+pathname<-file.path("E:/project/CASPIAN/simulation-results/SimulationData/TAD_results/hdbscan/20noise.hic")
+data<-readHiC(pathname,chr=chr,binSize = 40e3)
+## Find topological domains using TopDom method
+message("TopDom() ...")
+fit <- TopDom(data, window.size = 5L)
+print(fit)
+str(fit$domain)
+
+write.table(fit$domain,file="E:/project/CASPIAN/simulation-results/SimulationData/TAD_results/hdbscan/TopDom_20noise.txt",sep = ",")
+
+##### 2.Insulation Score #####
+download File: 
+# TO INSTALL PERL MODULE
+perl Build.pl
+./Build
+./Build install
+
+###### Directory of Files######
+# SI/
+#   scripts/
+#	matrix2insulation.pl
+#   chr19_50000_raw.hic #real Hi-C
+#   ChrmHi-Cmatrix.txt  #simualted Hi-C
+
+#####simulated Hi-C，40kb#####
+perl scripts/matrix2insulation.pl -i ChrmHi-Cmatrix.txt -is 500000 -ids 30000 -im mean -bmoe 3 -nt 0.1 -v
+
+####  Convert the input file format into the input format of SI#####
+import numpy as np
+outpath = "/home/ghaiyan/project/CASPIAN/SimulationData/simulatedMatrixes_TADs/simHiC_countMatrix_4noise_10-19_23h11m57s.txt"
+d = np.loadtxt(outpath)
+n = len(d)
+print(n)
+res = 40000
+head = [""]
+for i in range(n):
+    binid = str(i)
+    start = str(i * res)
+    end = str(i * res + res)
+    h = "bin{}|hg19|chrS:{}-{}".format(binid, start, end)
+    head.append(h)
+with open(outpath, "w") as out:
+    out.write("\t".join(head) + "\n")
+    for i in range(n):
+        line = [head[i + 1]]
+        for j in range(n):
+            if d[i,j] == 0:
+                line.append("NA")
+            else:
+                line.append(str(d[i,j]))
+        out.write("\t".join(line) + "\n")
+    out.close()
+
+##### 3.IC-Finder #####
+download File: http://membres-timc.imag.fr/Daniel.Jost/DJ-TIMC/Software.html
+
+dom=IC_finder('../TAD_results/SimulationData/4noise.hic') 
+
+##### 4.HiCseg #####
+library(HiCseg)
+setwd("E:/project/CASPIAN/baseline/HiCseg")
+matrix<-as.matrix(read.table(file="E:/project/CASPIAN/GM12878/chr19_50kb/chr19_50000.hic"))
+print(head(matrix))
+mat_size<-nrow(matrix) #size_mat
+print(mat_size)
+Kmax=as.integer(mat_size/3)
+print(Kmax)
+TADs<-HiCseg_linkC_R(mat_size,Kmax,"G",matrix,"D")
+write.table(TADs,file="E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb.txt",sep="\t",quote=F)
+
+## HiCseg results conversion
+options(scipen=999)
+res<-50000
+results<-read.table("E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb.txt",header=T,sep="\t",stringsAsFactors=F)
+results_trim<-results[results$t_hat!=0,]
+TADs<-data.frame("chr"=rep(chr,(nrow(results_trim)-1)),"start"=(results_trim$t_hat[-(nrow(results_trim))]*res),"end"=(results_trim$t_hat[-1]*res))
+write.table(TADs,file="E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb_TADs_coords.txt",sep="\t",row.names=F,col.names=F,quote=F)
+
+##### 5.ClusterTAD #####
+download file:https://github.com/BDM-Lab/ClusterTAD
+java -jar ClusterTAD.jar '../TAD_results/SimulationData/4noise.hic' 40000
+
+########6.DI##########
+1、pip install fanc
+2、/data2/ghy_data/ghy_data/GM12878/4DNFIXP4QG5B.mcool@50kb
+fanc directionality /data2/ghy_data/ghy_data/GM12878/4DNFIXP4QG5B.mcool@50kb /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb.bed -o bed
+fanc boundaries /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb.directionality /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb_2mb.DIboundaries -w 2mb
+
+## posprocessing:: Clean up and generate 7 col
+echo "Post processing files"
+perl file_ends_cleaner.pl /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/domaincall_software/gm12878_50kb-hmm-output.tad /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/domaincall_software/GM12878_50kb.directionality_2mb.DI
+perl file_ends_cleaner.pl gm12878_50kb-hmm-output.tad GM12878_50kb.directionality_2mb.DI| perl converter_7col.pl > hmm_file.hmm
+## Separate file into chromosome separated files
+echo "Post processing files: Breakup files into chromosome separated files"
+mkdir -p HMM/Chrom_Sep
+awk -v Folder=HMM -f Separate_Dixon_7col_by_Chromosome.awk HMM/hmm_file.hmm
+
+## Separate_Dixon_7col_by_Chromosome.awk
+BEGIN{
+ Path=Folder"/Chrom_Sep"
+}
+ {
+ print $0 > Path"/"$1".sep"
+ }
+##
+
+## for each chromosome file generate the final domains
+mkdir -p DI HMM DOMAINS
+chromList="chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22" ## list of chromosomes that have to be processed
+BIN=50000
+for chrom in $chromList
+do
+    echo $chrom
+    echo "Post processing files: Generating Domains"
+    perl hmm_probablity_correcter.pl HMM/Chrom_Sep/$chrom.sep 2 0.99 ${BIN} | perl hmm-state_caller.pl genomesizefile.fai $chrom | perl hmm-state_domains.pl > DOMAINS/$chrom.domain
+done
+
+
+
+
+
+
+
+

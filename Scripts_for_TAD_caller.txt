@@ -1,0 +1,253 @@
+### COMMAND LINE EXAMPLES FOR ALL TOOLS FOR Rao_2014 GM12878 SAMPLES
+#####Directory of Hi-C data #####
+##GM12878 cell line data
+../CASPIAN-TAD/GM12878/chr19_5kb/chr19_5000.hic #hic contact matrix,n*n format
+../CASPIAN-TAD/GM12878/chr19_50kb/chr19_50000.hic
+##Simulated Hi-C data
+../CASPIAN-TAD/SimulationData/trueTADs/simHiC_TADintervals_coords_4noise_10-19_23h11m57s.txt #true TADs data
+../CASPIAN-TAD/CASPIAN-TAD/SimulationData/simulatedMatrixes_TADs #simulated Hi-C contact matrix
+
+#####0. CASPAIN-TAD ##### 
+
+
+
+##### 1.TopDom #####
+##### GM2878，50kb#####
+library("TopDom")
+res<-c("50000")
+chrnum<-c("chr22","chr21","chr20","chr19","chr18","chr17","chr16","chr15","chr14","chr13","chr12","chr11","chr10","chr9","chr8","chr7","chr6","chr5","chr4","chr3","chr2","chr1")
+for (chr in chrnum){
+  print(chr)
+  hicpath<-paste("E:/project/CASPIAN/GM12878/50kb/hicmatrix/",chr,"_",res,".matrix",sep="")
+  print(hicpath)
+  pathname<-file.path(hicpath)
+  data<-readHiC(pathname,chr=chr,binSize = 50e3)
+  ## Find topological domains using TopDom method
+  message("TopDom() ...")
+  fit <- TopDom(data, window.size = 5L)
+  print(fit)
+  str(fit$domain)
+  tadname<-paste("E:/project/CASPIAN/GM12878/50kb/hicmatrix/",chr,"_",res,"Topdom.tad",sep="")
+  write.table(fit$domain,file=tadname,sep = ",")
+  }
+
+#####simualted data，40kb#####
+
+library("TopDom")
+chr<-"chr19"
+pathname<-file.path("E:/project/CASPIAN/simulation-results/SimulationData/TAD_results/hdbscan/20noise.hic")
+data<-readHiC(pathname,chr=chr,binSize = 40e3)
+## Find topological domains using TopDom method
+message("TopDom() ...")
+fit <- TopDom(data, window.size = 5L)
+print(fit)
+str(fit$domain)
+
+write.table(fit$domain,file="E:/project/CASPIAN/simulation-results/SimulationData/TAD_results/hdbscan/TopDom_20noise.txt",sep = ",")
+
+##### 2.Insulation Score #####
+########python,run cooler file##########
+# import standard python libraries
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+# Import python package for working with cooler files and tools for analysis
+import cooler
+import cooltools.lib.plotting
+from cooltools import insulation
+import cooltools
+from packaging import version
+from skimage.filters import threshold_li, threshold_otsu
+from matplotlib.colors import LogNorm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import bioframe
+from matplotlib.ticker import EngFormatter
+from matplotlib.colors import LogNorm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import bioframe
+
+if version.parse(cooltools.__version__) < version.parse('0.5.1'):
+    raise AssertionError("tutorials rely on cooltools version 0.5.1 or higher,"+
+                         "please check your cooltools version and update to the latest")
+#load cool file and visualize
+cool_file="/data2/ghy_data/ghy_data/GM12878/4DNFIXP4QG5B.mcool"
+print(cool_file)
+print(cooler.fileops.list_coolers(cool_file))
+resolution = 50000
+clr=cooler.Cooler(cool_file+'::resolutions/'+str(resolution))
+windows = [3*resolution, 5*resolution, 10*resolution, 25*resolution]
+insulation_table = insulation(clr, windows, verbose=True)
+
+# Functions to help with plotting
+def pcolormesh_45deg(ax, matrix_c, start=0, resolution=1, *args, **kwargs):
+    start_pos_vector = [start+resolution*i for i in range(len(matrix_c)+1)]
+    import itertools
+    n = matrix_c.shape[0]
+    t = np.array([[1, 0.5], [-1, 0.5]])
+    matrix_a = np.dot(np.array([(i[1], i[0])
+                                for i in itertools.product(start_pos_vector[::-1],
+                                                           start_pos_vector)]), t)
+    x = matrix_a[:, 1].reshape(n + 1, n + 1)
+    y = matrix_a[:, 0].reshape(n + 1, n + 1)
+    im = ax.pcolormesh(x, y, np.flipud(matrix_c), *args, **kwargs)
+    im.set_rasterized(True)
+    return im
+
+bp_formatter = EngFormatter('b')
+def format_ticks(ax, x=True, y=True, rotate=True):
+    if y:
+        ax.yaxis.set_major_formatter(bp_formatter)
+    if x:
+        ax.xaxis.set_major_formatter(bp_formatter)
+        ax.xaxis.tick_bottom()
+    if rotate:
+        ax.tick_params(axis='x',rotation=45)
+#see what the insulation track at the highest resolution looks like
+plt.rcParams['font.size'] = 12
+
+start = 10_500_000
+end = start+ 90*windows[0]
+region = ('chr2', start, end)
+norm = LogNorm(vmax=0.1, vmin=0.001)
+data = clr.matrix(balance=True).fetch(region)
+
+
+#Boundary calling
+
+
+insul_region = bioframe.select(insulation_table, region)
+
+boundaries = insul_region[~np.isnan(insul_region[f'boundary_strength_{windows[0]}'])]
+thresholds_li = {}
+thresholds_otsu = {}
+is_boundary = np.any([
+        ~insulation_table[f'boundary_strength_{w}'].isnull()
+        for w in windows],
+    axis=0)
+boundaries = insulation_table[is_boundary]
+
+top_boundaries = insulation_table[insulation_table[f'boundary_strength_{windows[1]}']>=thresholds_otsu[windows[1]]]
+top_boundaries.to_excel("/home/ghaiyan/project/CASPIAN/TAD_results/GM2878/50kb/GM12878_tad_boundaries_insulation_score_top_boundaries.xlsx")
+boundaries.to_excel("/home/ghaiyan/project/CASPIAN/TAD_results/GM2878/50kb/GM12878_tad_boundaries_insulation_score_boundaries.xlsx")
+
+
+##############end#############3
+download File: 
+# TO INSTALL PERL MODULE
+perl Build.pl
+./Build
+./Build install
+
+###### Directory of Files######
+# SI/
+#   scripts/
+#	matrix2insulation.pl
+#   chr19_50000_raw.hic #real Hi-C
+#   ChrmHi-Cmatrix.txt  #simualted Hi-C
+
+
+##### chr19，50kb#####
+perl scripts/matrix2insulation.pl -i chr19_50000_raw.hic -is 500000 -ids 30000 -im mean -bmoe 3 -nt 0.1 -v
+
+#####simulated Hi-C，40kb#####
+perl scripts/matrix2insulation.pl -i ChrmHi-Cmatrix.txt -is 500000 -ids 30000 -im mean -bmoe 3 -nt 0.1 -v
+
+####  Convert the input file format into the input format of SI#####
+import numpy as np
+outpath = "/home/ghaiyan/project/CASPIAN/SimulationData/simulatedMatrixes_TADs/simHiC_countMatrix_4noise_10-19_23h11m57s.txt"
+d = np.loadtxt(outpath)
+n = len(d)
+print(n)
+res = 40000
+head = [""]
+for i in range(n):
+    binid = str(i)
+    start = str(i * res)
+    end = str(i * res + res)
+    h = "bin{}|hg19|chrS:{}-{}".format(binid, start, end)
+    head.append(h)
+with open(outpath, "w") as out:
+    out.write("\t".join(head) + "\n")
+    for i in range(n):
+        line = [head[i + 1]]
+        for j in range(n):
+            if d[i,j] == 0:
+                line.append("NA")
+            else:
+                line.append(str(d[i,j]))
+        out.write("\t".join(line) + "\n")
+    out.close()
+
+##### 3.IC-Finder #####
+download File: http://membres-timc.imag.fr/Daniel.Jost/DJ-TIMC/Software.html
+dom=IC_finder('./chr19_5000.hic') 
+dom=IC_finder('./chr19_50000.hic') 
+dom=IC_finder('./simHiC_countMatrix_4noise_10-19_23h11m57s.txt') 
+
+##### 4.HiCseg #####
+library(HiCseg)
+setwd("E:/project/CASPIAN/baseline/HiCseg")
+matrix<-as.matrix(read.table(file="E:/project/CASPIAN/GM12878/chr19_50kb/chr19_50000.hic"))
+print(head(matrix))
+mat_size<-nrow(matrix) #size_mat
+print(mat_size)
+Kmax=as.integer(mat_size/3)
+print(Kmax)
+TADs<-HiCseg_linkC_R(mat_size,Kmax,"G",matrix,"D")
+write.table(TADs,file="E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb.txt",sep="\t",quote=F)
+## HiCseg results conversion
+options(scipen=999)
+res<-50000
+results<-read.table("E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb.txt",header=T,sep="\t",stringsAsFactors=F)
+results_trim<-results[results$t_hat!=0,]
+TADs<-data.frame("chr"=rep(chr,(nrow(results_trim)-1)),"start"=(results_trim$t_hat[-(nrow(results_trim))]*res),"end"=(results_trim$t_hat[-1]*res))
+write.table(TADs,file="E:/project/CASPIAN/baseline/HiCseg/HiCseg-gm12878-chr19-50kb_TADs_coords.txt",sep="\t",row.names=F,col.names=F,quote=F)
+
+##### 5.ClusterTAD #####
+download file:https://github.com/BDM-Lab/ClusterTAD
+java -jar ClusterTAD.jar './chr19_5000.hic' 5000
+java -jar ClusterTAD.jar './chr19_50000.hic' 50000
+java -jar ClusterTAD.jar './simHiC_countMatrix_4noise_10-19_23h11m57s.txt' 40000
+
+########6.DI##########
+1、pip install fanc
+2、/data2/ghy_data/ghy_data/GM12878/4DNFIXP4QG5B.mcool@50kb
+fanc directionality /data2/ghy_data/ghy_data/GM12878/4DNFIXP4QG5B.mcool@50kb /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb.bed -o bed
+fanc boundaries /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb.directionality /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/GM12878_50kb_2mb.DIboundaries -w 2mb
+
+## posprocessing:: Clean up and generate 7 col
+echo "Post processing files"
+perl file_ends_cleaner.pl /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/domaincall_software/gm12878_50kb-hmm-output.tad /home/ghaiyan/project/caspian-master/TAD_results/GM2878/50kb/DI/domaincall_software/GM12878_50kb.directionality_2mb.DI
+perl file_ends_cleaner.pl gm12878_50kb-hmm-output.tad GM12878_50kb.directionality_2mb.DI| perl converter_7col.pl > hmm_file.hmm
+## Separate file into chromosome separated files
+echo "Post processing files: Breakup files into chromosome separated files"
+mkdir -p HMM/Chrom_Sep
+awk -v Folder=HMM -f Separate_Dixon_7col_by_Chromosome.awk HMM/hmm_file.hmm
+
+## Separate_Dixon_7col_by_Chromosome.awk
+BEGIN{
+ Path=Folder"/Chrom_Sep"
+}
+ {
+ print $0 > Path"/"$1".sep"
+ }
+##
+
+## for each chromosome file generate the final domains
+mkdir -p DI HMM DOMAINS
+chromList="chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22" ## list of chromosomes that have to be processed
+BIN=50000
+for chrom in $chromList
+do
+    echo $chrom
+    echo "Post processing files: Generating Domains"
+    perl hmm_probablity_correcter.pl HMM/Chrom_Sep/$chrom.sep 2 0.99 ${BIN} | perl hmm-state_caller.pl genomesizefile.fai $chrom | perl hmm-state_domains.pl > DOMAINS/$chrom.domain
+done
+
+
+
+
+
+
+
+

@@ -1,0 +1,15 @@
+40_TADlike_alpha_50_set0	euclidean	25
+40_TADlike_alpha_50_set0	manhattan	25
+40_TADlike_alpha_50_set0	chebyshev	21
+40_TADlike_alpha_50_set0	euclidean	25
+40_TADlike_alpha_50_set0	manhattan	25
+40_TADlike_alpha_50_set0	chebyshev	21
+40_TADlike_alpha_100_set0	euclidean	56
+40_TADlike_alpha_100_set0	manhattan	38
+40_TADlike_alpha_100_set0	chebyshev	40
+40_TADlike_alpha_150_set0	euclidean	37
+40_TADlike_alpha_150_set0	manhattan	25
+40_TADlike_alpha_150_set0	chebyshev	41
+40_TADlike_alpha_200_set0	euclidean	25
+40_TADlike_alpha_200_set0	manhattan	25
+40_TADlike_alpha_200_set0	chebyshev	45
