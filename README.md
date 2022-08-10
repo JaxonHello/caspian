@@ -20,6 +20,23 @@ pip install math
 pip install hdbscan
 
 pip install sklearn
+## 0. Directory
+TAD_results/SimulationData:
+
+*.tad:TAD files with a format (start bin, start site,end bin, end site)
+
+*.hic:simulated Hi-C contact matrix, N*N format
+
+TAD_results/SimulationData/res_150_TAD:
+
+*.tad:TAD files with a format (start bin, start site,end bin, end site)
+
+*_TADlike_alpha_*_set0.txt:simulated Hi-C contact matrix, N*N format
+
+ 
+TAD_results / GM2878 /*: TAD results of GM12878 cell line Hi-C data, we do not provide the real Hi-C contact matrix due to the bigsize of files.
+
+ 
 
 ## 1. Hi-C Data used in this study:
 In our study, the simulated Hi-C data is provided by the paper "Forcato, M. et al. Comparison of computational methods for Hi-C data analysis. Nature methods 14, 679-685 (2017)."
