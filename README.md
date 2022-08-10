@@ -25,13 +25,13 @@ TAD_results/SimulationData:
 
 *.tad:TAD files with a format (start bin, start site,end bin, end site)
 
-*.hic:simulated Hi-C contact matrix, N*N format
+\*.hic:simulated Hi-C contact matrix, N\*N format
 
 TAD_results/SimulationData/res_150_TAD:
 
-*.tad:TAD files with a format (start bin, start site,end bin, end site)
+\*.tad:TAD files with a format (start bin, start site,end bin, end site)
 
-*_TADlike_alpha_*_set0.txt:simulated Hi-C contact matrix, N*N format
+\*_TADlike_alpha_\*_set0.txt:simulated Hi-C contact matrix, N\*N format
 
  
 TAD_results / GM2878 /*: TAD results of GM12878 cell line Hi-C data, we do not provide the real Hi-C contact matrix due to the bigsize of files.
