@@ -36,7 +36,7 @@ TAD_results/SimulationData/res_150_TAD:
  
 TAD_results / GM2878 /*: TAD results of GM12878 cell line Hi-C data, we do not provide the real Hi-C contact matrix due to the bigsize of files.
 
- 
+![输入图片说明](image.png)
 
 ## 1. Hi-C Data used in this study:
 In our study, the simulated Hi-C data is provided by the paper "Forcato, M. et al. Comparison of computational methods for Hi-C data analysis. Nature methods 14, 679-685 (2017)."
