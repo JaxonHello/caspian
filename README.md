@@ -1,14 +1,24 @@
 # CASPIAN: A Method to Identify Chromatin Structure based on Spatial Distance
 Requirment:
+
 python version:3.6.12
+
 python package:
+
 pip install numpy
+
 pip install matplotlib
+
 pip install seaborn
+
 pip install heapq
+
 pip install argparse
+
 pip install math
+
 pip install hdbscan
+
 pip install sklearn
 
 ## 1. Hi-C Data used in this study:
